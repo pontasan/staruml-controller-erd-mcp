@@ -22,8 +22,10 @@ An MCP (Model Context Protocol) server specialized for **Entity-Relationship Dia
 
 ## Prerequisites
 
-- **Node.js 18+**
-- **StarUML** with the [staruml-controller](https://github.com/pontasan/staruml-controller) extension installed and running
+- **Node.js 20+**
+- **StarUML** with the [staruml-controller](https://github.com/pontasan/staruml-controller) extension 2.x installed and running
+
+> **Upgrading from 1.x**: version 2 needs the [staruml-controller](https://github.com/pontasan/staruml-controller) extension 2.x, which requires a password. Update the extension, `staruml-controller-mcp-core` and this package together. Pull and rebuild `staruml-controller-mcp-core` first, then this package.
 
 ## Setup
 
@@ -53,13 +55,14 @@ npm install && npm run build
   <img src="images/start-server.jpg" alt="Tools menu showing StarUML Controller > Start Server" width="700">
 </p>
 
-3. Enter a port (default: `12345`) and click **OK**
+3. A dialog asks for the port (default: `12345`) and the password. A random UUID is filled in as the password automatically; keep it, press **Regenerate** for a new one, or type your own. Click **Start Server**
 
 <p align="center">
-  <img src="images/port-dialog.jpg" alt="Port number input dialog with default value 12345" width="400">
+  <img src="images/port-dialog.jpg" alt="Start dialog with the port and the password" width="400">
 </p>
 
-4. The HTTP server starts — all ERD tools become available via MCP
+4. The HTTP server starts and the password is copied to the clipboard, so you can paste it into the MCP server setting (`STARUML_PASSWORD`). The password is remembered for the next start. To copy it again or to change it, stop the server and open **Start Server...** again: the dialog shows the password with **Copy** and **Regenerate** buttons
+5. All ERD tools become available via MCP
 
 ### 4. Configure your AI assistant
 
@@ -70,7 +73,8 @@ npm install && npm run build
   "mcpServers": {
     "staruml-erd": {
       "command": "node",
-      "args": ["/absolute/path/to/staruml-controller-erd-mcp/dist/index.js"]
+      "args": ["/absolute/path/to/staruml-controller-erd-mcp/dist/index.js"],
+      "env": { "STARUML_PASSWORD": "<password>" }
     }
   }
 }
@@ -79,7 +83,7 @@ npm install && npm run build
 Or via CLI:
 
 ```bash
-claude mcp add staruml-erd node /absolute/path/to/staruml-controller-erd-mcp/dist/index.js
+claude mcp add staruml-erd -e STARUML_PASSWORD=<password> -- node /absolute/path/to/staruml-controller-erd-mcp/dist/index.js
 ```
 
 **Claude Desktop** — add to your config file:
@@ -92,7 +96,8 @@ claude mcp add staruml-erd node /absolute/path/to/staruml-controller-erd-mcp/dis
   "mcpServers": {
     "staruml-erd": {
       "command": "node",
-      "args": ["/absolute/path/to/staruml-controller-erd-mcp/dist/index.js"]
+      "args": ["/absolute/path/to/staruml-controller-erd-mcp/dist/index.js"],
+      "env": { "STARUML_PASSWORD": "<password>" }
     }
   }
 }
@@ -102,7 +107,17 @@ claude mcp add staruml-erd node /absolute/path/to/staruml-controller-erd-mcp/dis
 
 ## Available Tools
 
-All tools accept optional `host` (default: `localhost`) and `port` (default: `12345`) parameters.
+All tools accept optional `host` and `port` parameters. Their defaults come from environment variables of the MCP server:
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `STARUML_PASSWORD` | Yes | The password entered when the StarUML Controller server was started |
+| `STARUML_HOST` | No | Host of the machine running StarUML (default: `localhost`) |
+| `STARUML_PORT` | No | Port of the StarUML Controller server (default: `12345`) |
+
+The password is never a tool parameter, so it does not pass through the AI conversation.
+
+**File paths**: tools that write or read files (`diagram_export`, `project_export`, `project_export_all`, `project_export_doc`, `project_import`, `erd_generate_ddl`) use a `path` on the machine running this MCP server. `save_project` and `open_project` use a `path` on the machine running StarUML.
 
 ### ERD Tools
 
